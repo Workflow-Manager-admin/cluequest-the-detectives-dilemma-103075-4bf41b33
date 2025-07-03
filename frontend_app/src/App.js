@@ -34,8 +34,29 @@ const CLUE_AREAS = [
   { key: "audio", label: "Audio" },
 ];
 
-// === Fetch helpers ===
-const API_BASE = "http://localhost:3001"; // Proxy or adjust for deployment
+/*
+  === Fetch helpers & Backend URL resolver ===
+  Uses:
+    1. REACT_APP_BACKEND_URL (from .env, best for deployment/dev)
+    2. If not set: window.location.origin (assumes backend proxied at same domain/port)
+    3. If window not available, or origin is localhost, default to localhost:3001
+*/
+function getApiBase() {
+  // 1. If env set at build, use that
+  if (process.env.REACT_APP_BACKEND_URL)
+    return process.env.REACT_APP_BACKEND_URL.replace(/\/+$/, "");
+  // 2. If running in browser, use same origin
+  if (typeof window !== "undefined" && window.location && window.location.origin) {
+    // If hosted locally on port 3000, fallback to 3001 for dev
+    if (window.location.hostname === "localhost" && window.location.port === "3000") {
+      return "http://localhost:3001";
+    }
+    return window.location.origin;
+  }
+  // 3. Fallback: dev
+  return "http://localhost:3001";
+}
+const API_BASE = getApiBase();
 
 async function fetchStartGame() {
   const resp = await fetch(`${API_BASE}/start-game`, { method: "GET" });
